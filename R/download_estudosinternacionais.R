@@ -85,7 +85,18 @@ download_estudosinternacionais <- function(year, volume, number, dir) {
 
       curl::curl_download(
         x,
-        destfile = paste0(dir,"/",pdfs$ano[.y],"-",pdfs$vol[.y],"-",pdfs$n[.y],"-",.y,".pdf")
+        destfile = paste0
+        (
+          dir,
+          "/",
+          pdfs$ano[.y],
+          "-",
+          pdfs$vol[.y],
+          "-",
+          pdfs$n[.y],
+          "-",
+          ifelse(.y < 10, paste0("0",.y) , .y),
+          ".pdf")
       )
     })
 
