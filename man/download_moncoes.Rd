@@ -4,7 +4,7 @@
 \alias{download_moncoes}
 \title{Download articles from Estudos Internacionais}
 \usage{
-download_moncoes(year, volume, number, dir)
+download_moncoes(year, volume, number, dir, info_data = FALSE)
 }
 \arguments{
 \item{year}{Issue Year}
@@ -14,6 +14,8 @@ download_moncoes(year, volume, number, dir)
 \item{number}{Issue Number}
 
 \item{dir}{Directory for storing files}
+
+\item{info_data}{Whether to return or not a tibble with info on collected pdfs}
 }
 \value{
 Nothing. It just download files based on user input

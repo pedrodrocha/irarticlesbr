@@ -4,13 +4,14 @@
 #' @param volume Issue volume
 #' @param number Issue Number
 #' @param dir Directory for storing files
+#' @param info_data Whether to return or not a tibble with info on collected pdfs
 #'
 #' @return Nothing. It just download files based on user input
 #' @export
 #'
 #' @examples
 #' download_estudosinternacionais(year = 2020, volume = 8, number = 1, dir = '2020-v8-n1-estudosinternacionais')
-download_estudosinternacionais <- function(year, volume, number, dir) {
+download_estudosinternacionais <- function(year, volume, number, dir,  info_data = FALSE) {
 
   url_archive <- "http://periodicos.pucminas.br/index.php/estudosinternacionais/issue/archive"
 
@@ -81,24 +82,31 @@ download_estudosinternacionais <- function(year, volume, number, dir) {
 
   usethis::ui_todo('Downloading articles')
 
-    purrr::imap(pdfs$url, function(x, .y) {
+  if(isTRUE(info_data)){
+
+    dat <- purrr::imap_dfr(pdfs$url, function(x, .y) {
+
+      loc_arquivo <- paste0(dir,"/", pdfs$ano[.y], "-", pdfs$vol[.y],"-",pdfs$n[.y],"-",ifelse(.y < 10, paste0("0",.y) , .y),".pdf")
+
 
       curl::curl_download(
         x,
-        destfile = paste0
-        (
-          dir,
-          "/",
-          pdfs$ano[.y],
-          "-",
-          pdfs$vol[.y],
-          "-",
-          pdfs$n[.y],
-          "-",
-          ifelse(.y < 10, paste0("0",.y) , .y),
-          ".pdf")
+        destfile = loc_arquivo
       )
+
+      tibble::tibble(loc_arquivo = loc_arquivo, pdf_url = x)
     })
+
+    return(dat)
+
+  } else {
+    purrr::imap(pdfs$url, function(x, .y) {
+
+      path_file <- paste0(dir,"/", pdfs$ano[.y], "-", pdfs$vol[.y],"-",pdfs$n[.y],"-",ifelse(.y < 10, paste0("0",.y) , .y),".pdf")
+
+      curl::curl_download(x, destfile = path_file)
+    })
+  }
 
   usethis::ui_done('Downloading articles')
 
