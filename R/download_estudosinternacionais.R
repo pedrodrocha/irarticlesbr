@@ -94,7 +94,7 @@ download_estudosinternacionais <- function(year, volume, number, dir,  info_data
         destfile = loc_arquivo
       )
 
-      tibble::tibble(loc_arquivo = loc_arquivo, pdf_url = x)
+      tibble::tibble(loc_arquivo = loc_arquivo, pdf_url = x, size = download_size(x))
     })
 
     return(dat)
