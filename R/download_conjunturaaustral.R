@@ -1,3 +1,15 @@
+#' Title
+#'
+#' @param year
+#' @param volume
+#' @param number
+#' @param dir
+#' @param info_data
+#'
+#' @return
+#' @export
+#'
+#' @examples
 download_conjunturaaustral <- function(year, volume, number, dir, info_data = FALSE) {
 
   #/ Part 0: Solving issue number problem
@@ -66,9 +78,9 @@ download_conjunturaaustral <- function(year, volume, number, dir, info_data = FA
 
     url_lido %>%
       rvest::html_nodes('h2') %>%
-      rvest::html_text() -> ed
+      rvest::html_text() -> eds
 
-    pdf_url <- tibble::tibble(url = href, ed = ed)
+    pdf_url <- tibble::tibble(url = href, ed = eds)
 
     return(pdf_url)
 
