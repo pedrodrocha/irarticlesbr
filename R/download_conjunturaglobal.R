@@ -69,7 +69,8 @@ download_conjunturaglobal <- function(
     url_lido %>%
       rvest::html_nodes('.file') %>%
       rvest::html_attr('href') %>%
-      stringr::str_replace(.,"view","download") -> href
+      stringr::str_replace(.,"view","download")  %>%
+      stringr::str_replace(.,'downloadIssue','download') -> href
 
     url_lido %>%
       rvest::html_nodes('h2') %>%
