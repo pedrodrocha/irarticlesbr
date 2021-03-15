@@ -10,36 +10,38 @@
 #' @export
 #'
 #' @examples
-download_cartainternacional <- function(
+download_conjunturaglobal <- function(
   year, volume, number, dir,  info_data = FALSE
 ){
-
   #/ Part I: Retrieve Issues From Archive and Filter from User Input
   usethis::ui_todo('Retrieving issues from archive and filtering based on your input')
 
-  url_archive <- "https://www.cartainternacional.abri.org.br/Carta/issue/archive"
 
-  url_archive_lido <- xml2::read_html(url_archive)
+  url_archive1 <- "https://revistas.ufpr.br/conjgloblal/issue/archive?issuesPage=1#issues"
+  url_archive2 <- "https://revistas.ufpr.br/conjgloblal/issue/archive?issuesPage=2#issues"
 
-  url_archive_lido %>%
-    rvest::html_nodes(".obj_issue_summary .title") %>%
-    rvest::html_attr("href")  -> primary_url
+  url_archive1_lido <- xml2::read_html(url_archive1)
+  url_archive2_lido <- xml2::read_html(url_archive2)
 
-  url_archive_lido %>%
-    rvest::html_nodes(".series") %>%
-    rvest::html_text() %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(value = stringr::str_remove_all(value,"\\n|\\t")) -> eds_series
+  url_archive1_lido %>%
+    rvest::html_nodes("#issues h4 a") %>%
+    rvest::html_attr("href") -> primary_url1
 
-  url_archive_lido %>%
-    rvest::html_nodes(".obj_issue_summary .title") %>%
-    rvest::html_text()   %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(value = stringr::str_remove_all(value,"\\n|\\t")) %>%
-    dplyr::filter(value != "Carta Internacional") %>%
-    dplyr::bind_rows(eds_series,.) %>%
-    dplyr::pull(value) -> eds
+  url_archive2_lido %>%
+    rvest::html_nodes("#issues h4 a") %>%
+    rvest::html_attr("href") -> primary_url2
 
+  primary_url <- c(primary_url1,primary_url2)
+
+  url_archive1_lido %>%
+    rvest::html_nodes("#issues h4 a") %>%
+    rvest::html_text() -> eds1
+
+  url_archive2_lido %>%
+    rvest::html_nodes("#issues h4 a") %>%
+    rvest::html_text() -> eds2
+
+  eds <- c(eds1,eds2)
 
   tibble::tibble(url = primary_url,
                  editions = eds) %>%
@@ -52,12 +54,10 @@ download_cartainternacional <- function(
         as.integer(.),
       ano = stringr::str_extract(editions,"[0-9]{4}") %>%
         as.double(.)
-    )  %>%
+    ) %>%
     dplyr::filter(ano %in% year &
                     n %in% number &
                     vol %in% volume) -> eds_url
-
-
 
   usethis::ui_done('Retrieving issues from archive and filtering based on your input')
   #/ Part II: Retrieve Pdf links
@@ -67,12 +67,12 @@ download_cartainternacional <- function(
     url_lido <- xml2::read_html(x)
 
     url_lido %>%
-      rvest::html_nodes('.pdf') %>%
+      rvest::html_nodes('.file') %>%
       rvest::html_attr('href') %>%
       stringr::str_replace(.,"view","download") -> href
 
     url_lido %>%
-      rvest::html_nodes('h1') %>%
+      rvest::html_nodes('h2') %>%
       rvest::html_text() -> ed
 
     pdf_url <- tibble::tibble(url = href, ed = ed)
@@ -82,7 +82,7 @@ download_cartainternacional <- function(
 
 
   }) %>% dplyr::mutate(
-    vol = stringr::str_extract(ed, "(v. [0-9]{2})|(v. [0-9]{1})") %>%
+    vol = stringr::str_extract(ed,"(v. [0-9]{2})|(v. [0-9]{1})") %>%
       stringr::str_remove_all(., ' '),
     n = stringr::str_extract(ed,'(n. [0-9]{2})|(n. [0-9]{1})')  %>%
       stringr::str_remove_all(., ' '),
