@@ -1,3 +1,15 @@
+#' Title
+#'
+#' @param year
+#' @param volume
+#' @param number
+#' @param dir
+#' @param info_data
+#'
+#' @return
+#' @export
+#'
+#' @examples
 download_bjir <- function(
   year, volume, number, dir,  info_data = FALSE
 ){
