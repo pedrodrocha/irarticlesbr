@@ -66,7 +66,7 @@ download_contextointernacional <- function(year, volume, number, dir,  info_data
     stringr::str_extract(texto_ed, "no.[0-9]{1}") -> num
     stringr::str_extract(texto_ed, "[0-9]{4}") -> a
 
-    pdf_url <- tibble::tibble(url = href, ed = paste(vol, n, a))
+    pdf_url <- tibble::tibble(url = href, ed = paste(vol, num, a))
 
 
     return(pdf_url)
