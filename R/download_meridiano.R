@@ -107,10 +107,11 @@ download_meridiano <- function(year, volume, number, dir, info_data = FALSE) {
       stringr::str_remove_all(., ' '),
     n = stringr::str_extract(ed,'(n. [0-9]{3})|(n. [0-9]{2}-[0-9]{2})|(n. [0-9]{1}-[0-9]{2})|((n. [0-9]{1}-[0-9]{1}))|(n. [0-9]{2})|(n. [0-9]{1})')  %>%
       stringr::str_remove_all(., ' '),
-    ano = stringr::str_extract(ed,"[0-9]{4}")
+    ano = stringr::str_extract(ed,"[0-9]{4}"),
+    n = ifelse(as.integer(ano) > 2015, 0,n)
   )
 
-
+  pdfs
 
   usethis::ui_done('Crawling pdfs for download')
 
