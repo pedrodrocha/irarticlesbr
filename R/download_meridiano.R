@@ -55,11 +55,20 @@ download_meridiano <- function(year, volume, number, dir, info_data = FALSE) {
 
 
   url_archive_lido %>%
+    rvest::html_nodes(".media-heading .title") %>%
+    rvest::html_text() %>%
+    stringr::str_remove_all("\\n|\\t") %>%
+    stringr::str_replace("\\\\", "-")  %>%
+    Filter(x = ., function(x) { stringr::str_detect(x, '[0-9]{4}')}) %>%
+    stringr::str_to_lower(.) -> eds1
+
+  url_archive_lido %>%
     rvest::html_nodes(".lead") %>%
     rvest::html_text() %>%
     stringr::str_remove_all("\\n|\\t") %>%
-    stringr::str_replace("\\\\", "-") -> eds
-
+    stringr::str_replace("\\\\", "-") %>%
+    Filter(x = ., f = function(x) { !stringr::str_detect(x, 'v. [0-9]{2} \\([0-9]{4}\\)')})-> eds2
+  eds <- c(eds1,eds2)
   tibble::tibble(url = primary_url,
                  editions = eds) %>%
     dplyr::mutate(
@@ -111,7 +120,7 @@ download_meridiano <- function(year, volume, number, dir, info_data = FALSE) {
     n = ifelse(as.integer(ano) > 2015, 0,n)
   )
 
-  pdfs
+
 
   usethis::ui_done('Crawling pdfs for download')
 
