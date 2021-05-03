@@ -38,6 +38,7 @@ download_cartainternacional <- function(
     dplyr::mutate(value = stringr::str_remove_all(value,"\\n|\\t")) %>%
     dplyr::filter(value != "Carta Internacional") %>%
     dplyr::bind_rows(eds_series,.) %>%
+    dplyr::filter(value != "Carta Internacional - Publicação Contínua") %>%
     dplyr::pull(value) -> eds
 
 

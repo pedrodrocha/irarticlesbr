@@ -18,7 +18,7 @@ download_bjlas <-  function(year, volume, number, dir,  info_data = FALSE) {
   url_archive1 <- "https://www.revistas.usp.br/prolam/issue/archive"
   url_archive2 <- "https://www.revistas.usp.br/prolam/issue/archive/2"
 
-  # .obj_issue_summary .title
+
 
   xml2::read_html(url_archive1) %>%
     rvest::html_nodes('.obj_issue_summary .title') %>%
