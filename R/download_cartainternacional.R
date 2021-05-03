@@ -36,9 +36,8 @@ download_cartainternacional <- function(
     rvest::html_text()   %>%
     tibble::as_tibble() %>%
     dplyr::mutate(value = stringr::str_remove_all(value,"\\n|\\t")) %>%
-    dplyr::filter(value != "Carta Internacional") %>%
+    dplyr::filter(!stringr::str_detect(value,"Carta Internacional")) %>%
     dplyr::bind_rows(eds_series,.) %>%
-    dplyr::filter(value != "Carta Internacional - Publicação Contínua") %>%
     dplyr::pull(value) -> eds
 
 
