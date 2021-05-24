@@ -14,73 +14,67 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
 
   #/ Part I: Retrieve Issues From Archive and Filter from User Input
   usethis::ui_todo('Retrieving issues from archive and filtering based on your input')
-  url_archive <- "https://www.scielo.br/scielo.php?script=sci_issues&pid=0034-7329&lng=en&nrm=iso"
+
+  url_archive <- "http://www.scielo.br/j/rbpi/grid"
 
   xml2::read_html(url_archive) %>%
-    rvest::html_nodes("b a") %>%
-    rvest::html_attr("href")  -> primary_url
+    rvest::html_nodes(".btn") %>%
+    rvest::html_attr("href") %>%
+    paste0("http://www.scielo.br",.) %>%
+    Filter(x = ., f = function(x) { stringr::str_detect(x, "v[0-9]{2}n") & !stringr::str_detect(x, "goto=previous")})  -> primary_url
 
   xml2::read_html(url_archive) %>%
-    rvest::html_nodes("table") %>%
-    rvest::html_table(fill = TRUE) %>%
-    .[[5]] %>%
-    dplyr::select(1:5) %>%
-    dplyr::slice(-1) %>%
-    tidyr::pivot_longer(cols = 3:5,
-                        names_to = "X",
-                        values_to = "numero",
-                        values_drop_na = TRUE) %>%
-    dplyr::select(-X) %>%
-    dplyr::rename(ano = "X1",
-                  vol = "X2") %>%
-    dplyr::mutate(ano = as.numeric(ano),
-                  vol = as.numeric(vol),
-                  numero = as.numeric(dplyr::if_else(numero == "special issue","3", numero))) %>%
-    dplyr::filter(numero %in% c("1","2","3")) %>%
+    rvest::html_nodes("tbody td:nth-child(1)") %>%
+    rvest::html_text() -> anos
 
-    dplyr::mutate(url = primary_url) %>%
-    dplyr::filter(ano %in% year &
-                    numero %in% number &
-                    vol %in% volume) -> eds_url
+  xml2::read_html(url_archive) %>%
+    rvest::html_nodes("tbody th") %>%
+    rvest::html_text() %>%
+    stringr::str_squish() -> volumes
 
-  usethis::ui_done('Retrieving issues from archive and filtering based on your input')
+
+  xml2::read_html(url_archive) %>%
+    rvest::html_nodes("tbody .left") %>%
+    rvest::html_text() %>%
+    stringr::str_squish() %>%
+    stringr::str_replace(.,"n[:alnum:]{5} especial","3") %>%
+    stringr::str_replace_all(.," ", ",") -> numeros
+
+
+  tibble::tibble(
+    ano  = anos,
+    vol = volumes,
+    numero = numeros
+  )  %>%
+    tidyr::separate_rows(numero, sep = ",") -> ano_vol_year
+
+  tibble::tibble(
+    url = primary_url
+  ) %>%
+    dplyr::distinct() %>%
+    dplyr::bind_cols(ano_vol_year) %>%
+    dplyr::filter(ano %in% year & numero %in% number & vol %in% volume) -> eds_url
 
   #/ Part II: Retrieve Pdf links
   usethis::ui_todo('Crawling pdfs for download')
 
-  pdfs <- purrr::map_dfr(eds_url$url, function(x) {
-    url_lido <- xml2::read_html(x)
+  pdfs <- tibble:::tibble()
+
+  for(i in seq_along(eds_url$url)) {
+    url_lido <- xml2::read_html(eds_url$url[i])
 
     url_lido %>%
-      rvest::html_nodes(".content div a") %>%
+      rvest::html_nodes(".links a") %>%
       rvest::html_attr("href") %>%
-      Filter(x = .,f = function(x) stringr::str_detect(x,"(.pdf)")) %>%
-      paste0('https://www.scielo.br/',.) -> href
+      Filter(x = .,f = function(x) stringr::str_detect(x,"(.pdf)"))  %>%
+      paste0("http://www.scielo.br",.) -> href
 
-    url_lido %>%
-      rvest::html_nodes('p br+ font') %>%
-      rvest::html_text() -> texto_ed
+    pdfs <- tibble::tibble(
+      url = href, vol = eds_url$vol[i], n = eds_url$numero[i], ano = eds_url$ano[i]
+    ) %>%
+      dplyr::bind_rows(.,pdfs)
 
-    stringr::str_extract(texto_ed,"(vol.[0-9]{2})|(vol.[0-9]{1})") -> vol
-    stringr::str_extract(texto_ed, "no.[0-9]{1}") -> num
-    stringr::str_extract(texto_ed, "[0-9]{4}") -> a
-
-    pdf_url <- tibble::tibble(url = href, ed = paste(vol, num, a))
-
-
-    return(pdf_url)
-
-
-  }) %>% dplyr::mutate(
-    vol = stringr::str_extract(ed, "(vol.[0-9]{2})|(vol.[0-9]{1})") %>%
-      stringr::str_remove_all(., ' '),
-    n = stringr::str_extract(ed,'no.[0-9]{1}')  %>%
-      stringr::str_remove_all(., ' '),
-    ano = stringr::str_extract(ed,"[0-9]{4}")
-  )
-
-
-  usethis::ui_done('Crawling pdfs for download')
+  }
 
   #/ Part III Downloading
 
@@ -99,7 +93,7 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
         destfile = loc_arquivo
       )
 
-      tibble::tibble(loc_arquivo = loc_arquivo, pdf_url = x, size = pdf_size(x))
+      tibble::tibble(loc_arquivo = loc_arquivo, pdf_url = x, size = pdf_size(url = x))
     })
 
     return(dat)
@@ -114,5 +108,6 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
   }
 
   usethis::ui_done('Downloading articles')
+
 
 }
