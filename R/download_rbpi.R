@@ -18,7 +18,7 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
   url_archive <- "http://www.scielo.br/j/rbpi/grid"
 
   xml2::read_html(url_archive) %>%
-    rvest::html_nodes(".btn") %>%
+    rvest::html_nodes(".left .btn") %>%
     rvest::html_attr("href") %>%
     paste0("http://www.scielo.br",.) %>%
     Filter(x = ., f = function(x) { stringr::str_detect(x, "v[0-9]{2}n") & !stringr::str_detect(x, "goto=previous")})  -> primary_url
