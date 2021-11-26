@@ -47,7 +47,7 @@ download_meridiano <- function(year, volume, number, dir, info_data = FALSE) {
 
   url_archive <- "https://periodicos.unb.br/index.php/MED/issue/archive"
 
-  url_archive_lido <- xml2::read_html(url_archive)
+  url_archive_lido <- httr::GET(url_archive) %>% httr::content()
   url_archive_lido %>%
     rvest::html_nodes("#main-content .title") %>%
     rvest::html_attr("href")  -> primary_url
@@ -93,7 +93,7 @@ download_meridiano <- function(year, volume, number, dir, info_data = FALSE) {
   #/ Part II: Retrieve Pdf links
   usethis::ui_todo('Crawling pdfs for download')
   pdfs <- purrr::map_dfr(eds_url$url, function(x) {
-    url_lido <- xml2::read_html(x)
+    url_lido <- httr::GET(x) %>% httr::content()
 
     url_lido %>%
       rvest::html_nodes('.pdf') %>%
