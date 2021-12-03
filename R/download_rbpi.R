@@ -65,6 +65,7 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
   pdfs <- tibble:::tibble()
 
   for(i in seq_along(eds_url$url)) {
+    Sys.sleep(4)
     url_lido <- httr::GET(eds_url$url[i]) %>%
       httr::content()
 
@@ -93,7 +94,7 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
 
       loc_arquivo <- paste0(dir,"/", pdfs$ano[.y], "-", pdfs$vol[.y],"-",pdfs$n[.y],"-",ifelse(.y < 10, paste0("0",.y) , .y),".pdf")
 
-
+    Sys.sleep(4)
       curl::curl_download(
         x,
         destfile = loc_arquivo
@@ -106,7 +107,7 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
 
   } else {
     purrr::imap(pdfs$url, function(x, .y) {
-
+      Sys.sleep(4)
       path_file <- paste0(dir,"/", pdfs$ano[.y], "-", pdfs$vol[.y],"-",pdfs$n[.y],"-",ifelse(.y < 10, paste0("0",.y) , .y),".pdf")
 
       curl::curl_download(x, destfile = path_file)
