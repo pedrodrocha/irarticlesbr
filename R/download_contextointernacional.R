@@ -62,6 +62,8 @@ download_contextointernacional <- function(year, volume, number, dir,  info_data
   for(i in seq_along(eds_url$url)) {
     url_lido <- xml2::read_html(eds_url$url[i])
 
+    Sys.sleep(3)
+
     url_lido %>%
       rvest::html_nodes(".links a") %>%
       rvest::html_attr("href") %>%
@@ -83,6 +85,7 @@ download_contextointernacional <- function(year, volume, number, dir,  info_data
   if(isTRUE(info_data)){
 
     dat <- purrr::imap_dfr(pdfs$url, function(x, .y) {
+      Sys.sleep(3)
 
       loc_arquivo <- paste0(dir,"/", pdfs$ano[.y], "-", pdfs$vol[.y],"-",pdfs$n[.y],"-",ifelse(.y < 10, paste0("0",.y) , .y),".pdf")
 

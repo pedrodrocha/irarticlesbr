@@ -17,23 +17,27 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
 
   url_archive <- "http://www.scielo.br/j/rbpi/grid"
 
-  xml2::read_html(url_archive) %>%
+  httr::GET(url_archive) %>%
+    httr::content()%>%
     rvest::html_nodes(".left .btn") %>%
     rvest::html_attr("href") %>%
     paste0("http://www.scielo.br",.) %>%
     Filter(x = ., f = function(x) { stringr::str_detect(x, "v[0-9]{2}n") & !stringr::str_detect(x, "goto=previous")})  -> primary_url
 
-  xml2::read_html(url_archive) %>%
+    httr::GET(url_archive) %>%
+    httr::content() %>%
     rvest::html_nodes("tbody td:nth-child(1)") %>%
     rvest::html_text() -> anos
 
-  xml2::read_html(url_archive) %>%
+    httr::GET(url_archive) %>%
+     httr::content()%>%
     rvest::html_nodes("tbody th") %>%
     rvest::html_text() %>%
     stringr::str_squish() -> volumes
 
 
-  xml2::read_html(url_archive) %>%
+    httr::GET(url_archive) %>%
+      httr::content()%>%
     rvest::html_nodes("tbody .left") %>%
     rvest::html_text() %>%
     stringr::str_squish() %>%
@@ -61,7 +65,9 @@ download_rbpi <- function(year, volume, number, dir,  info_data = FALSE){
   pdfs <- tibble:::tibble()
 
   for(i in seq_along(eds_url$url)) {
-    url_lido <- xml2::read_html(eds_url$url[i])
+    url_lido <- httr::GET(eds_url$url[i]) %>%
+      httr::content()
+
 
     url_lido %>%
       rvest::html_nodes(".links a") %>%
