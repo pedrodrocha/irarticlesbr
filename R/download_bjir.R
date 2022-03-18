@@ -48,8 +48,9 @@ download_bjir <- function(
                  editions = eds) %>%
     dplyr::mutate(
 
+
       editions = ifelse(
-        stringr::str_detect(editions,"Hegemonia,"),
+        editions == stringr::str_detect(editions,"Hegemonia"),
         "v. 7 n. 3 (2018)", editions
       ),
       editions = ifelse(

@@ -32,21 +32,40 @@ download_conjunturaaustral <- function(year, volume, number, dir, info_data = FA
   #/ Part I: Retrieve Issues From Archive and Filter from User Input
   usethis::ui_todo('Retrieving issues from archive and filtering based on your input')
 
-  url_archive <- "https://seer.ufrgs.br/ConjunturaAustral/issue/archive"
-  url_archive <- xml2::read_html(url_archive)
-
-  url_archive %>%
-    rvest::html_nodes("h4 a") %>%
-    rvest::html_attr("href") -> primary_url
+  base <- "https://seer.ufrgs.br/index.php/ConjunturaAustral/issue/archive/"
+  url_archive <- stringr::str_c(base,c('1','2','3','4'))
 
 
-  url_archive %>%
-    rvest::html_nodes("h4 a") %>%
-    rvest::html_text() %>%
-    stringr::str_remove(":(.*)") -> eds
+  grab_ed_links <- function(archive){
 
-  tibble::tibble(url = primary_url,
-                 editions = eds) %>%
+    url_lido <- xml2::read_html(archive)
+
+    url_lido %>%
+      rvest::html_nodes('.title') %>%
+      rvest::html_text() %>%
+      stringr::str_remove_all("\\n|\\t") -> eds
+
+    url_lido %>%
+      rvest::html_nodes('.title') %>%
+      rvest::html_attr('href') -> primary_url
+
+    tibble::tibble(url = primary_url,
+                   editions = eds)
+
+  }
+
+
+
+  purrr::map_df(url_archive, grab_ed_links) %>%
+    dplyr::mutate(
+      editions = dplyr::case_when(
+        stringr::str_detect(editions,"O SUL GLOBAL PENSADO") ~ "v. 12 n. 59 (2021)",
+        stringr::str_detect(editions,"Dez anos de Conjuntura Austral") ~ "v. 11 n. 55 (2020)",
+        stringr::str_detect(editions,"Especial Diplomacia") ~ "v. 11 n. 54 (2020)",
+        stringr::str_detect(editions,"Especial BRICS") ~ "v. 11 n. 53 (2020)",
+        TRUE ~ editions
+      )
+    ) %>%
     dplyr::mutate(
       vol = stringr::str_extract(editions, "(v. [0-9]{2})|(v. [0-9]{1})") %>%
         stringr::str_replace_all(.,'v. ','') %>%
@@ -54,12 +73,11 @@ download_conjunturaaustral <- function(year, volume, number, dir, info_data = FA
       n = stringr::str_extract(editions,'(n. [0-9]{2}-[0-9]{2})|(n. [0-9]{1}-[0-9]{2})|((n. [0-9]{1}-[0-9]{1}))|(n. [0-9]{2})|(n. [0-9]{1})') %>%
         stringr::str_replace_all(.,'n. ',''),
       ano = stringr::str_extract(editions,"[0-9]{4}") %>%
-        as.double(.),
-      url = paste0(url, "/showToc")
+        as.double(.)
     ) %>%
     dplyr::filter(ano %in% year &
                     n %in% number &
-                    vol %in% volume)  -> eds_url
+                    vol %in% volume) -> eds_url
 
   usethis::ui_done('Retrieving issues from archive and filtering based on your input')
 
@@ -71,18 +89,19 @@ download_conjunturaaustral <- function(year, volume, number, dir, info_data = FA
     url_lido <- xml2::read_html(x)
 
     url_lido %>%
-      rvest::html_nodes('.file') %>%
+      rvest::html_nodes('.pdf') %>%
       rvest::html_attr('href') %>%
-      stringr::str_replace(.,"view","download") %>%
-      stringr::str_replace(.,'downloadIssue','download')-> href
+      stringr::str_replace(.,"view","download") -> href
 
     url_lido %>%
-      rvest::html_nodes('h2') %>%
-      rvest::html_text() -> eds
+      rvest::html_nodes('h1') %>%
+      rvest::html_text() -> ed
 
-    pdf_url <- tibble::tibble(url = href, ed = eds)
+    pdf_url <- tibble::tibble(url = href, ed = ed)
+
 
     return(pdf_url)
+
 
   }) %>%
     dplyr::mutate(
